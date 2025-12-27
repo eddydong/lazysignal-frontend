@@ -22,6 +22,16 @@ const buyThresholdInput = document.getElementById('buyThreshold');
 const subscribeBtn = document.getElementById('subscribeBtn');
 const subscriptionStatus = document.getElementById('subscriptionStatus');
 
+// Strategy editor elements
+const strategyEditor = document.getElementById('strategyEditor');
+const editStrategyBtn = document.getElementById('editStrategyBtn');
+const editMaPeriodInput = document.getElementById('editMaPeriod');
+const editSellThresholdInput = document.getElementById('editSellThreshold');
+const editBuyThresholdInput = document.getElementById('editBuyThreshold');
+const saveStrategyBtn = document.getElementById('saveStrategyBtn');
+const cancelEditBtn = document.getElementById('cancelEditBtn');
+const strategySaveStatus = document.getElementById('strategySaveStatus');
+
 // Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
     // Load default signal on page load
@@ -46,6 +56,11 @@ document.addEventListener('DOMContentLoaded', () => {
             handleSubscribe();
         }
     });
+
+    // Strategy editor event listeners
+    editStrategyBtn.addEventListener('click', showStrategyEditor);
+    saveStrategyBtn.addEventListener('click', saveStrategyChanges);
+    cancelEditBtn.addEventListener('click', hideStrategyEditor);
 });
 
 // Handle strategy selection change
@@ -151,16 +166,107 @@ async function handleSubscribe() {
     }
 }
 
-// Show subscription status message
-function showSubscriptionStatus(message, type) {
-    subscriptionStatus.textContent = message;
-    subscriptionStatus.className = `status-message ${type}`;
-    subscriptionStatus.classList.remove('hidden');
+// Show strategy editor with current values
+function showStrategyEditor() {
+    if (!currentSignalData || !currentSignalData.strategy_params) {
+        showStrategySaveStatus('No strategy data available to edit.', 'error');
+        return;
+    }
+
+    // Populate editor with current values
+    const params = currentSignalData.strategy_params;
+    editMaPeriodInput.value = params.ma_period || 200;
+    editSellThresholdInput.value = ((1 - params.sell_threshold) * 100).toFixed(1);
+    editBuyThresholdInput.value = ((params.buy_threshold - 1) * 100).toFixed(1);
+
+    // Show editor
+    strategyEditor.style.display = 'block';
+    strategyEditor.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Hide strategy editor
+function hideStrategyEditor() {
+    strategyEditor.style.display = 'none';
+    hideStrategySaveStatus();
+}
+
+// Save strategy changes
+async function saveStrategyChanges() {
+    const userId = userIdInput.value.trim();
+    if (!userId) {
+        showStrategySaveStatus('Please enter your user ID first.', 'error');
+        return;
+    }
+
+    // Show loading state
+    saveStrategyBtn.disabled = true;
+    saveStrategyBtn.textContent = '💾 Saving...';
+
+    try {
+        // Prepare updated strategy parameters
+        const updatedParams = {
+            ma_period: parseInt(editMaPeriodInput.value),
+            sell_threshold: 1 - (parseFloat(editSellThresholdInput.value) / 100),
+            buy_threshold: 1 + (parseFloat(editBuyThresholdInput.value) / 100),
+            data_field: 'GSPC'  // Keep GSPC for now
+        };
+
+        // Send update request
+        const response = await fetch(`${API_BASE_URL}/update_strategy`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                strategy_params: updatedParams
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            showStrategySaveStatus('Strategy updated successfully!', 'success');
+            hideStrategyEditor();
+            
+            // Reload signal to show updated strategy
+            setTimeout(() => {
+                loadSignal();
+            }, 1500);
+        } else {
+            throw new Error(result.message || 'Failed to update strategy');
+        }
+
+    } catch (error) {
+        console.error('Strategy update error:', error);
+        showStrategySaveStatus('Failed to update strategy. Please try again.', 'error');
+    } finally {
+        saveStrategyBtn.disabled = false;
+        saveStrategyBtn.textContent = '💾 Save Strategy';
+    }
+}
+
+// Show strategy save status message
+function showStrategySaveStatus(message, type) {
+    strategySaveStatus.textContent = message;
+    strategySaveStatus.className = `status-message ${type}`;
+    strategySaveStatus.classList.remove('hidden');
     
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
-        subscriptionStatus.classList.add('hidden');
-    }, 5000);
+    // Auto-hide after 5 seconds for success, keep error visible
+    if (type === 'success') {
+        setTimeout(() => {
+            hideStrategySaveStatus();
+        }, 5000);
+    }
+}
+
+// Hide strategy save status
+function hideStrategySaveStatus() {
+    strategySaveStatus.classList.add('hidden');
 }
 
 // Validate email format
@@ -309,6 +415,10 @@ function updateStrategyInfo(params) {
     document.getElementById('maPeriod').textContent = params.ma_period || '--';
     document.getElementById('sellThreshold').textContent = params.sell_threshold ? `${(params.sell_threshold * 100).toFixed(1)}%` : '--';
     document.getElementById('buyThreshold').textContent = params.buy_threshold ? `${((params.buy_threshold - 1) * 100).toFixed(1)}%` : '--';
+
+    // Show edit button for custom strategies
+    const isCustomStrategy = params.strategy_name && params.strategy_name.startsWith('Custom');
+    editStrategyBtn.style.display = isCustomStrategy ? 'block' : 'none';
 
     strategyInfo.classList.remove('hidden');
 }

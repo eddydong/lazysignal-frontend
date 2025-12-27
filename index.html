@@ -104,7 +104,10 @@
             </div>
 
             <div class="strategy-info" id="strategyInfo">
-                <h3>Strategy Information</h3>
+                <div class="strategy-header">
+                    <h3>Strategy Information</h3>
+                    <button id="editStrategyBtn" class="edit-strategy-btn" style="display: none;">✏️ Edit Strategy</button>
+                </div>
                 <div class="strategy-details">
                     <div class="detail-row">
                         <span class="label">Strategy:</span>
@@ -126,11 +129,33 @@
             </div>
         </div>
 
-        <div id="errorContainer" class="error-container hidden">
-            <div class="error-message">
-                <h3>❌ Error Loading Data</h3>
-                <p id="errorText">Unable to fetch market data. Please try again later.</p>
-                <button id="retryBtn">Retry</button>
+        <div class="strategy-editor" id="strategyEditor" style="display: none;">
+            <h3>🎛️ Edit Your Strategy</h3>
+            <div class="strategy-editor-form">
+                <div class="editor-section">
+                    <h4>Strategy Parameters</h4>
+                    <div class="param-grid">
+                        <div class="param-item">
+                            <label for="editMaPeriod">MA Period:</label>
+                            <input type="number" id="editMaPeriod" min="5" max="500" value="200">
+                        </div>
+                        <div class="param-item">
+                            <label for="editSellThreshold">Sell Threshold (% below MA):</label>
+                            <input type="number" id="editSellThreshold" min="0.1" max="10" step="0.1" value="1.5">
+                        </div>
+                        <div class="param-item">
+                            <label for="editBuyThreshold">Buy Threshold (% above MA):</label>
+                            <input type="number" id="editBuyThreshold" min="0.1" max="10" step="0.1" value="2.5">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="editor-actions">
+                    <button id="saveStrategyBtn" class="save-btn">💾 Save Strategy</button>
+                    <button id="cancelEditBtn" class="cancel-btn">❌ Cancel</button>
+                </div>
+                
+                <div id="strategySaveStatus" class="status-message hidden"></div>
             </div>
         </div>
 
