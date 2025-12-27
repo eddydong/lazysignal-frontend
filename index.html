@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LazySignal - Smart Trading Signals</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📈 LazySignal</h1>
+            <p>Smart Trading Signals Powered by Machine Learning</p>
+        </header>
+
+        <div class="user-section">
+            <label for="userId">User ID (optional):</label>
+            <input type="text" id="userId" placeholder="Enter your user ID for personalized signals">
+            <button id="loadSignalBtn">Load Signal</button>
+        </div>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Loading market data...</p>
+        </div>
+
+        <div id="signalContainer" class="signal-container hidden">
+            <div class="signal-header">
+                <h2>Current Signal</h2>
+                <div class="timestamp" id="timestamp"></div>
+            </div>
+
+            <div class="signal-card" id="signalCard">
+                <div class="price-display">
+                    <div class="price">$<span id="price">--</span></div>
+                    <div class="signal-badge" id="signalBadge">
+                        <span class="signal-text">--</span>
+                    </div>
+                </div>
+
+                <div class="signal-details">
+                    <div class="detail-row">
+                        <span class="label">Position:</span>
+                        <span class="value" id="position">--</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Reason:</span>
+                        <span class="value" id="reason">--</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Distance from MA:</span>
+                        <span class="value" id="distance">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="moving-averages">
+                <h3>Moving Averages</h3>
+                <div class="ma-grid" id="maGrid">
+                    <!-- Moving averages will be populated here -->
+                </div>
+            </div>
+
+            <div class="strategy-info" id="strategyInfo">
+                <h3>Strategy Information</h3>
+                <div class="strategy-details">
+                    <div class="detail-row">
+                        <span class="label">Strategy:</span>
+                        <span class="value" id="strategyName">--</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">MA Period:</span>
+                        <span class="value" id="maPeriod">--</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Sell Threshold:</span>
+                        <span class="value" id="sellThreshold">--</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Buy Threshold:</span>
+                        <span class="value" id="buyThreshold">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="errorContainer" class="error-container hidden">
+            <div class="error-message">
+                <h3>❌ Error Loading Data</h3>
+                <p id="errorText">Unable to fetch market data. Please try again later.</p>
+                <button id="retryBtn">Retry</button>
+            </div>
+        </div>
+
+        <footer>
+            <p>© 2025 LazySignal. Market data updates daily after market close.</p>
+            <p><small>Data provided by Yahoo Finance & Federal Reserve Economic Data</small></p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
