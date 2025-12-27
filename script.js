@@ -2,6 +2,7 @@
 
 const API_BASE_URL = 'https://us-central1-lazysignal-prod.cloudfunctions.net';
 const SNAPSHOT_ENDPOINT = `${API_BASE_URL}/snapshot`;
+const SUBSCRIBE_ENDPOINT = `${API_BASE_URL}/subscribe`;
 
 // DOM Elements
 const userIdInput = document.getElementById('userId');
@@ -10,6 +11,16 @@ const loadingDiv = document.getElementById('loading');
 const signalContainer = document.getElementById('signalContainer');
 const errorContainer = document.getElementById('errorContainer');
 const retryBtn = document.getElementById('retryBtn');
+
+// Subscription elements
+const emailInput = document.getElementById('email');
+const strategySelect = document.getElementById('strategySelect');
+const customStrategySection = document.getElementById('customStrategySection');
+const maPeriodInput = document.getElementById('maPeriod');
+const sellThresholdInput = document.getElementById('sellThreshold');
+const buyThresholdInput = document.getElementById('buyThreshold');
+const subscribeBtn = document.getElementById('subscribeBtn');
+const subscriptionStatus = document.getElementById('subscriptionStatus');
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
@@ -26,7 +37,149 @@ document.addEventListener('DOMContentLoaded', () => {
             loadSignal();
         }
     });
+
+    // Subscription event listeners
+    strategySelect.addEventListener('change', handleStrategyChange);
+    subscribeBtn.addEventListener('click', handleSubscribe);
+    emailInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleSubscribe();
+        }
+    });
 });
+
+// Handle strategy selection change
+function handleStrategyChange() {
+    const selectedStrategy = strategySelect.value;
+    
+    if (selectedStrategy === 'custom') {
+        customStrategySection.classList.remove('hidden');
+        // Load current strategy parameters for customization
+        loadCurrentStrategyParams();
+    } else {
+        customStrategySection.classList.add('hidden');
+    }
+}
+
+// Load current strategy parameters for customization
+function loadCurrentStrategyParams() {
+    // Get current signal data to populate custom fields
+    const currentData = getCurrentSignalData();
+    if (currentData && currentData.strategy_params) {
+        maPeriodInput.value = currentData.strategy_params.ma_period || 200;
+        sellThresholdInput.value = ((1 - currentData.strategy_params.sell_threshold) * 100).toFixed(1);
+        buyThresholdInput.value = ((currentData.strategy_params.buy_threshold - 1) * 100).toFixed(1);
+    }
+}
+
+// Get current signal data (stored after last load)
+let currentSignalData = null;
+
+function getCurrentSignalData() {
+    return currentSignalData;
+}
+
+// Handle subscription
+async function handleSubscribe() {
+    const email = emailInput.value.trim();
+    const selectedStrategy = strategySelect.value;
+    
+    if (!email) {
+        showSubscriptionStatus('Please enter your email address.', 'error');
+        return;
+    }
+    
+    if (!isValidEmail(email)) {
+        showSubscriptionStatus('Please enter a valid email address.', 'error');
+        return;
+    }
+    
+    // Show loading state
+    subscribeBtn.disabled = true;
+    subscribeBtn.textContent = 'Subscribing...';
+    
+    try {
+        // Prepare subscription data
+        const subscriptionData = {
+            email: email,
+            strategy: selectedStrategy,
+            strategy_params: {}
+        };
+        
+        // Add custom strategy parameters if selected
+        if (selectedStrategy === 'custom') {
+            subscriptionData.strategy_params = {
+                ma_period: parseInt(maPeriodInput.value),
+                sell_threshold: 1 - (parseFloat(sellThresholdInput.value) / 100),
+                buy_threshold: 1 + (parseFloat(buyThresholdInput.value) / 100),
+                data_field: 'GSPC'
+            };
+        }
+        
+        // Send subscription request
+        const response = await fetch(SUBSCRIBE_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(subscriptionData)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        // Generate user ID from email for future use
+        const userId = generateUserId(email);
+        
+        showSubscriptionStatus(`Successfully subscribed! Your user ID is: ${userId}`, 'success');
+        
+        // Update user ID field
+        userIdInput.value = userId;
+        
+        // Load personalized signal
+        loadSignal();
+        
+    } catch (error) {
+        console.error('Subscription error:', error);
+        showSubscriptionStatus('Failed to subscribe. Please try again.', 'error');
+    } finally {
+        subscribeBtn.disabled = false;
+        subscribeBtn.textContent = 'Subscribe to Alerts';
+    }
+}
+
+// Show subscription status message
+function showSubscriptionStatus(message, type) {
+    subscriptionStatus.textContent = message;
+    subscriptionStatus.className = `status-message ${type}`;
+    subscriptionStatus.classList.remove('hidden');
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        subscriptionStatus.classList.add('hidden');
+    }, 5000);
+}
+
+// Validate email format
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+// Generate user ID from email
+function generateUserId(email) {
+    // Create a simple hash-like ID from email
+    let hash = 0;
+    for (let i = 0; i < email.length; i++) {
+        const char = email.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+    }
+    return 'user_' + Math.abs(hash).toString(36);
+}
 
 // Load signal from API
 async function loadSignal() {
@@ -68,6 +221,9 @@ async function loadSignal() {
 // Display signal data
 function displaySignal(data) {
     try {
+        // Store current signal data for strategy customization
+        currentSignalData = data;
+        
         // Update timestamp
         document.getElementById('timestamp').textContent = formatTimestamp(data.timestamp);
 

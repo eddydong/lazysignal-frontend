@@ -20,6 +20,47 @@
             <button id="loadSignalBtn">Load Signal</button>
         </div>
 
+        <div class="subscription-section">
+            <h3>📧 Subscribe to Email Alerts</h3>
+            <div class="subscription-form">
+                <div class="form-group">
+                    <label for="email">Email Address:</label>
+                    <input type="email" id="email" placeholder="your.email@example.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="strategySelect">Choose Strategy:</label>
+                    <select id="strategySelect">
+                        <option value="default">Asymmetric SMA200 (Default)</option>
+                        <option value="conservative">Conservative SMA100</option>
+                        <option value="aggressive">Aggressive SMA50</option>
+                        <option value="custom">Custom Strategy</option>
+                    </select>
+                </div>
+
+                <div id="customStrategySection" class="custom-strategy hidden">
+                    <h4>Customize Your Strategy</h4>
+                    <div class="strategy-params">
+                        <div class="param-group">
+                            <label for="maPeriod">MA Period:</label>
+                            <input type="number" id="maPeriod" min="5" max="500" value="200">
+                        </div>
+                        <div class="param-group">
+                            <label for="sellThreshold">Sell Threshold (% below MA):</label>
+                            <input type="number" id="sellThreshold" min="0.1" max="10" step="0.1" value="1.5">
+                        </div>
+                        <div class="param-group">
+                            <label for="buyThreshold">Buy Threshold (% above MA):</label>
+                            <input type="number" id="buyThreshold" min="0.1" max="10" step="0.1" value="2.5">
+                        </div>
+                    </div>
+                </div>
+
+                <button id="subscribeBtn" class="subscribe-btn">Subscribe to Alerts</button>
+                <div id="subscriptionStatus" class="status-message hidden"></div>
+            </div>
+        </div>
+
         <div id="loading" class="loading hidden">
             <div class="spinner"></div>
             <p>Loading market data...</p>
