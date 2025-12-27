@@ -171,14 +171,8 @@ function isValidEmail(email) {
 
 // Generate user ID from email
 function generateUserId(email) {
-    // Create a simple hash-like ID from email
-    let hash = 0;
-    for (let i = 0; i < email.length; i++) {
-        const char = email.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // Convert to 32-bit integer
-    }
-    return 'user_' + Math.abs(hash).toString(36);
+    // Use email directly as user ID (URL-safe)
+    return email.toLowerCase().replace(/[^a-z0-9]/g, '_');
 }
 
 // Load signal from API
